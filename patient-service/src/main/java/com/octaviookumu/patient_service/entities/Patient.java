@@ -1,4 +1,4 @@
-package com.octaviookumu.patient_service.entity;
+package com.octaviookumu.patient_service.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
