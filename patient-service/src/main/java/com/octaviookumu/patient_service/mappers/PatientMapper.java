@@ -1,7 +1,11 @@
 package com.octaviookumu.patient_service.mappers;
 
+import com.octaviookumu.patient_service.domain.CreatePatientRequest;
+import com.octaviookumu.patient_service.domain.dtos.CreatePatientRequestDto;
 import com.octaviookumu.patient_service.domain.dtos.PatientResponseDto;
 import com.octaviookumu.patient_service.domain.entities.Patient;
+
+import java.time.LocalDate;
 
 public class PatientMapper {
     public static PatientResponseDto toDto(Patient patient) {
@@ -13,4 +17,25 @@ public class PatientMapper {
                 .dateOfBirth(patient.getDateOfBirth().toString())
                 .build();
     }
+
+    public static CreatePatientRequest toCreatePatientRequest(CreatePatientRequestDto createPatientRequestDto) {
+        return CreatePatientRequest.builder()
+                .name(createPatientRequestDto.getName())
+                .email(createPatientRequestDto.getEmail())
+                .address(createPatientRequestDto.getAddress())
+                .dateOfBirth(createPatientRequestDto.getDateOfBirth())
+                .registeredDate(createPatientRequestDto.getRegisteredDate())
+                .build();
+    }
+
+    public static Patient toPatient(CreatePatientRequest createPatientRequest) {
+        return Patient.builder()
+                .name(createPatientRequest.getName())
+                .email(createPatientRequest.getEmail())
+                .address(createPatientRequest.getAddress())
+                .dateOfBirth(LocalDate.parse(createPatientRequest.getDateOfBirth()))
+                .registeredDate(LocalDate.parse(createPatientRequest.getRegisteredDate()))
+                .build();
+    }
+
 }
