@@ -2,6 +2,7 @@ package com.octaviookumu.patient_service.controllers;
 
 import com.octaviookumu.patient_service.domain.dtos.CreatePatientRequestDto;
 import com.octaviookumu.patient_service.domain.dtos.PatientResponseDto;
+import com.octaviookumu.patient_service.domain.dtos.UpdatePatientRequestDto;
 import com.octaviookumu.patient_service.domain.entities.Patient;
 import com.octaviookumu.patient_service.mappers.PatientMapper;
 import com.octaviookumu.patient_service.services.PatientService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/patients")
@@ -35,6 +37,18 @@ public class PatientController {
                 .createPatient(PatientMapper.toCreatePatientRequest(createPatientRequestDto));
         PatientResponseDto patientResponseDto = PatientMapper.toDto(savedPatient);
         return new ResponseEntity<>(patientResponseDto, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PatientResponseDto> updatePatient(
+            @PathVariable UUID id,
+            @Valid
+            @RequestBody UpdatePatientRequestDto updatePatientRequestDto
+    ) {
+        Patient updatedPatient = patientService.updatePatient(
+                id, PatientMapper.toUpdatePatientRequest(updatePatientRequestDto));
+
+        return ResponseEntity.ok(PatientMapper.toDto(updatedPatient));
     }
 
 

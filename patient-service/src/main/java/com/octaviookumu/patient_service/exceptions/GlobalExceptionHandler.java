@@ -39,7 +39,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponseDto> handleException(MethodArgumentNotValidException ex) {
 
-
         // Transform Spring's FieldErrors into your custom ApiErrorResponseDto.FieldError list
         List<ApiErrorResponseDto.FieldError> validationErrors = ex.getBindingResult().getFieldErrors()
                 .stream()
@@ -71,15 +70,32 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleIllegalStateException(
-            IllegalStateException ex) {
-        log.warn("Email address already exists {} ", ex.getMessage());
+    @ExceptionHandler(PatientNotFoundException.class)
+    public ResponseEntity<ApiErrorResponseDto> handlePatientNotFoundException(
+            PatientNotFoundException ex
+    ) {
+        log.warn("Patient does not exist with ID {}", ex.getMessage());
+
         ApiErrorResponseDto error = ApiErrorResponseDto.builder()
-                .status(HttpStatus.CONFLICT.value())
-                .message(ex.getMessage())
+                .status(HttpStatus.NOT_FOUND.value())
+                .message("Patient does not exist with ID")
                 .build();
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(PatientIdMismatchException.class)
+    public ResponseEntity<ApiErrorResponseDto> handlePatientIdMismatchException(
+            PatientIdMismatchException ex) {
+
+        log.warn("Patient ID mismatch validation failed: {}", ex.getMessage());
+
+        ApiErrorResponseDto error = ApiErrorResponseDto.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message("Path ID does not match Request Body ID")
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
 }
