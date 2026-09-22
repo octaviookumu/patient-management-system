@@ -13,4 +13,6 @@ public interface PatientService {
     Patient createPatient(CreatePatientRequest createPatientRequest);
 
     Patient updatePatient(UUID id, UpdatePatientRequest updatePatientRequest);
+
+    void deletePatient(UUID id);
 }
