@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface PatientService {
-    boolean checkIfEmailExists(String email);
-
     List<Patient> getPatients();
 
     Patient createPatient(CreatePatientRequest createPatientRequest);

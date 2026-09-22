@@ -24,11 +24,6 @@ public class PatientServiceImpl implements PatientService {
     private final PatientRepository patientRepository;
 
     @Override
-    public boolean checkIfEmailExists(String email) {
-        return patientRepository.existsByEmail(email);
-    }
-
-    @Override
     public List<Patient> getPatients() {
         return patientRepository.findAll();
     }
@@ -38,7 +33,7 @@ public class PatientServiceImpl implements PatientService {
     public Patient createPatient(CreatePatientRequest createPatientRequest) {
         String email = createPatientRequest.getEmail();
 
-        if (checkIfEmailExists(email)) {
+        if (patientRepository.existsByEmail(email)) {
             // custom exception makes it easy to trace in the logs
             throw new EmailAlreadyExistsException("A patient with email " + email + " already exists");
         }
@@ -51,7 +46,7 @@ public class PatientServiceImpl implements PatientService {
     @Transactional
     @Override
     public Patient updatePatient(UUID id, UpdatePatientRequest updatePatientRequest) {
-        if (!id.equals(updatePatientRequest.getId())){
+        if (!id.equals(updatePatientRequest.getId())) {
             throw new PatientIdMismatchException("Path ID does not match Request Body ID");
         }
 
@@ -60,7 +55,7 @@ public class PatientServiceImpl implements PatientService {
 
         String email = updatePatientRequest.getEmail();
 
-        if (checkIfEmailExists(email)) {
+        if (patientRepository.existsByEmailAndIdNot(email, updatePatientRequest.getId())) {
             throw new EmailAlreadyExistsException("A patient with email " + email + " already exists");
         }
 
