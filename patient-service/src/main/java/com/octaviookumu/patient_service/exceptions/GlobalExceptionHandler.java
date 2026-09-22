@@ -59,8 +59,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorPayload);
     }
 
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponseDto> handleEmailAlreadyExistsException(
+            EmailAlreadyExistsException ex
+    ) {
+        ApiErrorResponseDto error = ApiErrorResponseDto.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .message("Email address already exists")
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorResponseDto> handleIllegalStateException(IllegalStateException ex) {
+    public ResponseEntity<ApiErrorResponseDto> handleIllegalStateException(
+            IllegalStateException ex) {
+        log.warn("Email address already exists {} ", ex.getMessage());
         ApiErrorResponseDto error = ApiErrorResponseDto.builder()
                 .status(HttpStatus.CONFLICT.value())
                 .message(ex.getMessage())
