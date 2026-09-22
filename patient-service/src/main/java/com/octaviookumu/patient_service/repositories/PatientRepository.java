@@ -10,11 +10,6 @@ import java.util.UUID;
 public interface PatientRepository extends JpaRepository<Patient, UUID> {
     boolean existsByEmail(String email);
 
-    //
-    // but will ignore the patient we're trying to update and its search results
-    // if there's another user with the same email but a different id
-    // this stops JPA from incorrectly flagging the email as duplicate even if we're trying to update the same record
-
     /**
      * Checks if another patient is already using a specific email address, excluding the patient you are currently updating.
      * IdNot(id) means - Check if this email belongs to anyone else besides the patient with this specific ID.
