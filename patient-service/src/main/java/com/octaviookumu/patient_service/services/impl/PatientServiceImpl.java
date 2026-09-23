@@ -66,4 +66,13 @@ public class PatientServiceImpl implements PatientService {
 
         return patientRepository.save(existingPatient);
     }
+
+    @Transactional
+    @Override
+    public void deletePatient(UUID id) {
+        Patient existingPatient = patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException("Patient does not exist with ID " + id));
+
+        patientRepository.delete(existingPatient);
+    }
 }
