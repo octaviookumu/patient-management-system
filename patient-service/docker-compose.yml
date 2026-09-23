@@ -1,4 +1,23 @@
 services:
+  patient-service:
+    build:
+      context: ..
+      dockerfile: patient-service/Dockerfile
+    image: patient-service:latest
+    container_name: patient-service
+    ports:
+      - "4000:4000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+    networks:
+      - internal
+    depends_on:
+      - patient-service-db
+
   patient-service-db:
     image: postgres:18
     ports:
@@ -13,8 +32,18 @@ services:
     networks:
       - internal
 
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - internal
+    depends_on:
+      - patient-service-db
+
 networks:
   internal:
     name: internal
 
-#  A Dockerfile tells Docker how to build an image. Your Compose file tells Docker how to run containers
+#  A Dockerfile tells Docker how to build an image.
+#  Your Compose file tells Docker how to run containers
