@@ -1,6 +1,6 @@
 package com.octaviookumu.billing_service.grpc;
 
-import billing.BillingResponse
+import billing.BillingResponse;
 import billing.BillingServiceGrpc.BillingServiceImplBase;
 import io.grpc.stub.StreamObserver;
 import lombok.extern.slf4j.Slf4j;
