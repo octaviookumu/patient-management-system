@@ -1,34 +1,43 @@
 services:
   patient-service:
     build:
-      context: ..
+      context: .
       dockerfile: patient-service/Dockerfile
     image: patient-service:latest
     container_name: patient-service
+    env_file:
+      - ./patient-service/.env
     ports:
       - "4000:4000"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://patient-service-db:5432/${POSTGRES_DB}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_SQL_INIT_MODE: always
     networks:
       - internal
     depends_on:
       - patient-service-db
+      - billing-service
+
+  billing-service:
+    build:
+      context: .
+      dockerfile: billing-service/Dockerfile
+    image: billing-service:latest
+    container_name: billing-service
+    env_file:
+      - ./billing-service/.env
+    ports:
+      - "4001:4001"
+      - "9001:9001"
+    networks:
+      - internal
 
   patient-service-db:
     image: postgres:18
     ports:
       - "5001:5432"
     container_name: patient-service-db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - ./patient-service/.env
     volumes:
-      - ../db_volumes/patient-service-db:/var/lib/postgresql
+      - ./db_volumes/patient-service-db:/var/lib/postgresql
     networks:
       - internal
 

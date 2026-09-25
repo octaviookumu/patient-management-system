@@ -6,6 +6,7 @@ import com.octaviookumu.patient_service.domain.entities.Patient;
 import com.octaviookumu.patient_service.exceptions.EmailAlreadyExistsException;
 import com.octaviookumu.patient_service.exceptions.PatientIdMismatchException;
 import com.octaviookumu.patient_service.exceptions.PatientNotFoundException;
+import com.octaviookumu.patient_service.grpc.BillingServiceGrpcClient;
 import com.octaviookumu.patient_service.mappers.PatientMapper;
 import com.octaviookumu.patient_service.repositories.PatientRepository;
 import com.octaviookumu.patient_service.services.PatientService;
@@ -22,6 +23,7 @@ import java.util.UUID;
 public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
+    private final BillingServiceGrpcClient billingServiceGrpcClient;
 
     @Override
     public List<Patient> getPatients() {
@@ -38,9 +40,15 @@ public class PatientServiceImpl implements PatientService {
             throw new EmailAlreadyExistsException("A patient with email " + email + " already exists");
         }
 
-        Patient newPatient = PatientMapper.toModel(createPatientRequest);
+        Patient savedPatient = patientRepository.save(PatientMapper.toModel(createPatientRequest));
 
-        return patientRepository.save(newPatient);
+        // call billing service and create account for patient
+        billingServiceGrpcClient.createBillingAccount(
+                savedPatient.getId().toString(),
+                savedPatient.getName(),
+                savedPatient.getEmail());
+
+        return savedPatient;
     }
 
     @Transactional
