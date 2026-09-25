@@ -5,14 +5,12 @@ import billing.BillingResponse;
 import billing.BillingServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class BillingServiceGrpcClient {
     private final BillingServiceGrpc.BillingServiceBlockingStub blockingStub;
 
@@ -34,6 +32,8 @@ public class BillingServiceGrpcClient {
             String name,
             String email
     ) {
+        log.info("Calling billing service for patientId={}", patientId);
+
         BillingRequest request = BillingRequest.newBuilder()
                 .setPatientId(patientId)
                 .setName(name)

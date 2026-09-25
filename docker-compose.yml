@@ -13,6 +13,7 @@ services:
       - internal
     depends_on:
       - patient-service-db
+      - billing-service
 
   billing-service:
     build:
