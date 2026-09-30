@@ -7,6 +7,7 @@ import com.octaviookumu.patient_service.exceptions.EmailAlreadyExistsException;
 import com.octaviookumu.patient_service.exceptions.PatientIdMismatchException;
 import com.octaviookumu.patient_service.exceptions.PatientNotFoundException;
 import com.octaviookumu.patient_service.grpc.BillingServiceGrpcClient;
+import com.octaviookumu.patient_service.kafka.KafkaProducer;
 import com.octaviookumu.patient_service.mappers.PatientMapper;
 import com.octaviookumu.patient_service.repositories.PatientRepository;
 import com.octaviookumu.patient_service.services.PatientService;
@@ -24,6 +25,7 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final KafkaProducer kafkaProducer;
 
     @Override
     public List<Patient> getPatients() {
@@ -47,6 +49,9 @@ public class PatientServiceImpl implements PatientService {
                 savedPatient.getId().toString(),
                 savedPatient.getName(),
                 savedPatient.getEmail());
+
+        // send the kafka event to the topic
+        kafkaProducer.sendEvent(savedPatient);
 
         return savedPatient;
     }
