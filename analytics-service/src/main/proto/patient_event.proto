@@ -1,0 +1,25 @@
+// Describes properties sent in any patient event to the topic from Kafka producer
+syntax = "proto3";
+
+// generated code will go to patient.events package
+package patient.events;
+
+// Tells Maven we want to generate individual files for each of the classes it can create
+option java_multiple_files = true;
+
+// properties in patient event - Maven will generate the class we can use in consumer
+message PatientEvent{
+  string patientId = 1;
+  string name = 2;
+  string email = 3;
+  string event_type = 4;
+}
+
+// Why we're doing this:
+// The proto files are used so that all of the microservices that use, produce and consume patient event messages
+// have a single source of truth that they can read the properties from
+// Ideally this proto file would be in a central location and there would only be one file that all microservices would consume
+// into their codebases in order to generate Java classes. If it changes in one place, it changes in the microservices
+
+
+
