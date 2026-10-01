@@ -13,6 +13,7 @@ services:
       - internal
     depends_on:
       - patient-service-db
+      - kafka
       - billing-service
 
   billing-service:
@@ -28,6 +29,22 @@ services:
       - "9001:9001"
     networks:
       - internal
+
+  analytics-service:
+    build:
+      context: .
+      dockerfile: analytics-service/Dockerfile
+    image: analytics-service:latest
+    container_name: analytics-service
+    env_file:
+      - ./analytics-service/.env
+    ports:
+      - "4002:4002"
+    networks:
+      - internal
+    depends_on:
+      - kafka
+      - patient-service
 
   patient-service-db:
     image: postgres:18
