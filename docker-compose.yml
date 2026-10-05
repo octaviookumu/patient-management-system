@@ -1,4 +1,17 @@
 services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    image: api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "4004:4004"
+    networks:
+      - internal
+    depends_on:
+      - patient-service
+
   patient-service:
     build:
       context: .
@@ -7,8 +20,6 @@ services:
     container_name: patient-service
     env_file:
       - ./patient-service/.env
-    ports:
-      - "4000:4000"
     networks:
       - internal
     depends_on:
