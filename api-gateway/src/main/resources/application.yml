@@ -13,7 +13,7 @@ spring:
             - id: patient-service-route
               uri: http://patient-service:4000
               predicates: # what requests get sent to patient service
-                - Path=/api/v1/patients, /api/v1/patients/**
+                - Path=/api/v1/patients/**
 
             # REST-CLIENT -> http://localhost:4004/api/v1/patients
             # API-GATEWAY -> http://patient-service:4000/v3/api-docs
