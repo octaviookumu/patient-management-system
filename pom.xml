@@ -21,5 +21,6 @@
         <module>billing-service</module>
         <module>analytics-service</module>
         <module>api-gateway</module>
+        <module>auth-service</module>
     </modules>
 </project>

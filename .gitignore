@@ -5,5 +5,4 @@
 *.ipr
 
 /db_volumes/
-/patient-service/.env
-/billing-service/.env
+**/.env

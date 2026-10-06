@@ -12,6 +12,21 @@ services:
     depends_on:
       - patient-service
 
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    image: auth-service:latest
+    container_name: auth-service
+    env_file:
+      - ./auth-service/.env
+    ports:
+      - "4005:4005"
+    networks:
+      - internal
+    depends_on:
+      - auth-service-db
+
   patient-service:
     build:
       context: .
@@ -63,9 +78,21 @@ services:
       - "5001:5432"
     container_name: patient-service-db
     env_file:
-      - ./patient-service/.env
+      - ./patient-service-db/.env
     volumes:
       - ./db_volumes/patient-service-db:/var/lib/postgresql
+    networks:
+      - internal
+
+  auth-service-db:
+    image: postgres:18
+    ports:
+      - "5002:5432"
+    container_name: auth-service-db
+    env_file:
+      - ./auth-service-db/.env
+    volumes:
+      - ./db_volumes/auth-service-db:/var/lib/postgresql
     networks:
       - internal
 
@@ -96,6 +123,7 @@ services:
       - internal
     depends_on:
       - patient-service-db
+      - auth-service-db
 
 networks:
   internal:
