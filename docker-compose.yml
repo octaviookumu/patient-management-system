@@ -69,6 +69,18 @@ services:
     networks:
       - internal
 
+  auth-service-db:
+    image: postgres:18
+    ports:
+      - "5002:5432"
+    container_name: auth-service-db
+    env_file:
+      - ./auth-service/.env
+    volumes:
+      - ./db_volumes/auth-service-db:/var/lib/postgresql
+    networks:
+      - internal
+
   kafka:
     image: apache/kafka:4.1.2
     container_name: kafka
@@ -96,6 +108,7 @@ services:
       - internal
     depends_on:
       - patient-service-db
+      - auth-service-db
 
 networks:
   internal:
