@@ -8,22 +8,19 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/login")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
 
     @Operation(summary = "Generate token on user login")
-    @PostMapping
+    @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(
             @Valid @RequestBody LoginRequestDto loginRequestDto) {
 
@@ -39,7 +36,18 @@ public class AuthController {
 
         // a constructor approach works well when with a few properties in dto/object
         return ResponseEntity.ok(new LoginResponseDto(token));
+    }
 
+    @Operation(summary = "Validate token")
+    @GetMapping("/validate")
+    public ResponseEntity<Void> validateToken(
+            @RequestHeader("Authorization") String authHeader) {
+        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        return authService.validateToken(authHeader.substring(7))
+                ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
 }
