@@ -2,8 +2,10 @@ package com.octaviookumu.auth_service.controllers;
 
 import com.octaviookumu.auth_service.domain.dtos.LoginRequestDto;
 import com.octaviookumu.auth_service.domain.dtos.LoginResponseDto;
+import com.octaviookumu.auth_service.services.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,7 +17,10 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/login")
+@RequiredArgsConstructor
 public class AuthController {
+
+    private final AuthService authService;
 
     @Operation(summary = "Generate token on user login")
     @PostMapping

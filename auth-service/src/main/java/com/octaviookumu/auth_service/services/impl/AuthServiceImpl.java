@@ -3,6 +3,7 @@ package com.octaviookumu.auth_service.services.impl;
 import com.octaviookumu.auth_service.domain.entities.User;
 import com.octaviookumu.auth_service.services.AuthService;
 import com.octaviookumu.auth_service.services.UserService;
+import com.octaviookumu.auth_service.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Optional<String> authenticate(String email, String password) {
