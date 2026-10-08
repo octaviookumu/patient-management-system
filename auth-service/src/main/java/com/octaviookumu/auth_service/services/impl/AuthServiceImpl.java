@@ -4,6 +4,7 @@ import com.octaviookumu.auth_service.domain.entities.User;
 import com.octaviookumu.auth_service.services.AuthService;
 import com.octaviookumu.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -13,11 +14,18 @@ import java.util.Optional;
 public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Optional<String> authenticate(String email, String password) {
-        Optional<User> user = userService.findByEmail(email);
+        Optional<String> token = userService.findByEmail(email)
+                .filter(u -> passwordEncoder.matches(password, u.getPassword()))
+                .map(u -> jwtUtil.generateToken(u.getEmail(), u.getRole()));
 
+        // passwordEncoder.matches() - if the password in the login request matches what is stored for the user
+        // jwtUtil.generateToken() - if the passwords are valid, generate a token using user's email and role
+        // This transforms the user into a token
 
+        return token;
     }
 }
