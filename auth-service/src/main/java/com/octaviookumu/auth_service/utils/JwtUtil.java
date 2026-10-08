@@ -2,7 +2,6 @@ package com.octaviookumu.auth_service.utils;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,13 +11,13 @@ import java.util.Base64;
 import java.util.Date;
 
 @Component
-@RequiredArgsConstructor
 public class JwtUtil {
     private final Key secretKey;
 
     public JwtUtil(@Value("${jwt.secret}") String secret) {
         // convert the string from our .env file to a Key object
         byte[] keyBytes = Base64.getDecoder().decode(secret.getBytes(StandardCharsets.UTF_8));
+
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
