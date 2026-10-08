@@ -4,6 +4,7 @@ import com.octaviookumu.auth_service.domain.entities.User;
 import com.octaviookumu.auth_service.services.AuthService;
 import com.octaviookumu.auth_service.services.UserService;
 import com.octaviookumu.auth_service.utils.JwtUtil;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,5 +30,15 @@ public class AuthServiceImpl implements AuthService {
         // This transforms the user into a token
 
         return token;
+    }
+
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            jwtUtil.validateToken(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
     }
 }

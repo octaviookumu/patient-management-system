@@ -1,10 +1,13 @@
 package com.octaviookumu.auth_service.utils;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Base64;
@@ -26,9 +29,22 @@ public class JwtUtil {
                 .subject(email)
                 .claim("role", role) // claim is a custom property we can add to jwts
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hrs
+                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 2)) // 2 hrs
                 .signWith(secretKey)
                 .compact(); // take all the properties, create a string, and sign it with secret key
+    }
+
+    public void validateToken(String token) {
+        try {
+            // verify if a token is valid
+            Jwts.parser().verifyWith((SecretKey) secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+        } catch (SignatureException e) {
+            throw new JwtException("Invalid JWT signature");
+        } catch (JwtException e) {
+            throw new JwtException("Invalid JWT");
+        }
     }
 
 }
