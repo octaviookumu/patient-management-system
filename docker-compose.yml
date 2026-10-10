@@ -9,8 +9,6 @@ services:
       - "4004:4004"
     networks:
       - internal
-    depends_on:
-      - patient-service
 
   auth-service:
     build:
@@ -20,8 +18,6 @@ services:
     container_name: auth-service
     env_file:
       - ./auth-service/.env
-    ports:
-      - "4005:4005"
     networks:
       - internal
     depends_on:
