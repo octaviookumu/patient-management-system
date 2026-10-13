@@ -10,10 +10,13 @@ spring:
             # REST-CLIENT -> http://localhost:4004/api/v1/patients
             # API-GATEWAY -> http://patient-service:4000/api/v1/patients
             # PATIENT-SERVICE (SPRING BOOT APP) -> api/v1/patients -> Patients array
+            # JwtValidation will look for a class prefixed with GatewayFilterFactory i.e. JwtValidationGatewayFilterFactory
             - id: patient-service-route
               uri: http://patient-service:4000
               predicates: # what requests get sent to patient service
                 - Path=/api/v1/patients/**
+              filters:
+                - JwtValidation
 
             # REST-CLIENT -> http://localhost:4004/api/v1/patients
             # API-GATEWAY -> http://patient-service:4000/v3/api-docs
