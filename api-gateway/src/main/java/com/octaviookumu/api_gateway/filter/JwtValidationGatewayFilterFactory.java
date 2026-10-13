@@ -40,7 +40,7 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
 
             // call the validate endpoint on the auth service to let it do its validation
             return webClient.get()
-                    .uri("/validate")
+                    .uri("/api/v1/auth/validate")
                     .header(HttpHeaders.AUTHORIZATION, token)
                     .retrieve()
                     .toBodilessEntity()  // tell the webClient the response doesn't have a body
