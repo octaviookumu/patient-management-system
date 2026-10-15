@@ -1,6 +1,6 @@
 package com.octaviookumu.patient_service.kafka;
 
-import com.octaviookumu.patient_service.domain.entities.Patient;
+import com.octaviookumu.patient_service.domain.entity.Patient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
