@@ -18,18 +18,26 @@ spring:
               filters:
                 - JwtValidation
 
+            - id: auth-service-route
+              uri: http://auth-service:4005
+              predicates:
+                - Path=/api/v1/auth/**
+
             # REST-CLIENT -> http://localhost:4004/api/v1/patients
             # API-GATEWAY -> http://patient-service:4000/v3/api-docs
             - id: api-docs-patient-route
               uri: http://patient-service:4000
               predicates:
-                - Path=/api/docs/patients
+                - Path=/api-docs/patients
               filters:
-                - RewritePath=/api/docs/patients,/v3/api-docs
+                - RewritePath=/api-docs/patients,/v3/api-docs
 
-            - id: auth-service-route
+            # any requests received by api-gateway that has the path (/api/docs/auth) will be received by this route
+            - id: api-docs-auth-route
               uri: http://auth-service:4005
               predicates:
-                - Path=/api/v1/auth/**
+                - Path=/api-docs/auth
+              filters:
+                - RewritePath=/api-docs/auth,/v3/api-docs
 
 
