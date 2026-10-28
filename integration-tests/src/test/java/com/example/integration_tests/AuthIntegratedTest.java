@@ -1,3 +1,5 @@
+package com.example.integration_tests;
+
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
