@@ -1,0 +1,43 @@
+package com.octaviookumu.auth_service.service.impl;
+
+import com.octaviookumu.auth_service.service.AuthService;
+import com.octaviookumu.auth_service.service.UserService;
+import com.octaviookumu.auth_service.util.JwtUtil;
+import io.jsonwebtoken.JwtException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class AuthServiceImpl implements AuthService {
+
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+
+    @Override
+    public Optional<String> authenticate(String email, String password) {
+        Optional<String> token = userService.findByEmail(email)
+                .filter(u -> passwordEncoder.matches(password, u.getPassword()))
+                .map(u -> jwtUtil.generateToken(u.getEmail(), u.getRole()));
+
+        // passwordEncoder.matches() - if the password in the login request matches what is stored for the user
+        // jwtUtil.generateToken() - if the passwords are valid, generate a token using user's email and role
+        // This transforms the user into a token
+
+        return token;
+    }
+
+    @Override
+    public boolean validateToken(String token) {
+        try {
+            jwtUtil.validateToken(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+}

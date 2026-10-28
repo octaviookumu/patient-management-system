@@ -1,0 +1,91 @@
+package com.octaviookumu.patient_service.service.impl;
+
+import com.octaviookumu.patient_service.domain.CreatePatientRequest;
+import com.octaviookumu.patient_service.domain.UpdatePatientRequest;
+import com.octaviookumu.patient_service.domain.entity.Patient;
+import com.octaviookumu.patient_service.exception.EmailAlreadyExistsException;
+import com.octaviookumu.patient_service.exception.PatientIdMismatchException;
+import com.octaviookumu.patient_service.exception.PatientNotFoundException;
+import com.octaviookumu.patient_service.grpc.BillingServiceGrpcClient;
+import com.octaviookumu.patient_service.kafka.KafkaProducer;
+import com.octaviookumu.patient_service.mapper.PatientMapper;
+import com.octaviookumu.patient_service.repository.PatientRepository;
+import com.octaviookumu.patient_service.service.PatientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class PatientServiceImpl implements PatientService {
+
+    private final PatientRepository patientRepository;
+    private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final KafkaProducer kafkaProducer;
+
+    @Override
+    public List<Patient> getPatients() {
+        return patientRepository.findAll();
+    }
+
+    @Transactional
+    @Override
+    public Patient createPatient(CreatePatientRequest createPatientRequest) {
+        String email = createPatientRequest.getEmail();
+
+        if (patientRepository.existsByEmail(email)) {
+            // custom exception makes it easy to trace in the logs
+            throw new EmailAlreadyExistsException("A patient with email " + email + " already exists");
+        }
+
+        Patient savedPatient = patientRepository.save(PatientMapper.toModel(createPatientRequest));
+
+        // call billing service and create account for patient
+        billingServiceGrpcClient.createBillingAccount(
+                savedPatient.getId().toString(),
+                savedPatient.getName(),
+                savedPatient.getEmail());
+
+        // send the kafka event to the topic
+        kafkaProducer.sendEvent(savedPatient);
+
+        return savedPatient;
+    }
+
+    @Transactional
+    @Override
+    public Patient updatePatient(UUID id, UpdatePatientRequest updatePatientRequest) {
+        if (!id.equals(updatePatientRequest.getId())) {
+            throw new PatientIdMismatchException("Path ID does not match Request Body ID");
+        }
+
+        Patient existingPatient = patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException("Patient does not exist with ID " + id));
+
+        String email = updatePatientRequest.getEmail();
+
+        if (patientRepository.existsByEmailAndIdNot(email, updatePatientRequest.getId())) {
+            throw new EmailAlreadyExistsException("A patient with email " + email + " already exists");
+        }
+
+        existingPatient.setName(updatePatientRequest.getName());
+        existingPatient.setEmail(email);
+        existingPatient.setAddress(updatePatientRequest.getAddress());
+        existingPatient.setDateOfBirth(LocalDate.parse(updatePatientRequest.getDateOfBirth()));
+
+        return patientRepository.save(existingPatient);
+    }
+
+    @Transactional
+    @Override
+    public void deletePatient(UUID id) {
+        Patient existingPatient = patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException("Patient does not exist with ID " + id));
+
+        patientRepository.delete(existingPatient);
+    }
+}
