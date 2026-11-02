@@ -1,7 +1,11 @@
 package com.octaviookumu.stack;
 
 import software.amazon.awscdk.*;
+import software.amazon.awscdk.services.ec2.InstanceClass;
+import software.amazon.awscdk.services.ec2.InstanceSize;
+import software.amazon.awscdk.services.ec2.InstanceType;
 import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.rds.*;
 
 public class LocalStack extends Stack {
 
@@ -11,12 +15,35 @@ public class LocalStack extends Stack {
         super(scope, id, props);
 
         this.vpc = createVpc();
+
+        DatabaseInstance authServiceDb = createDatabase("AuthServiceDB", "auth-service-db");
+        DatabaseInstance patientServiceDb = createDatabase("PatientServiceDB", "patient-service-db");
+
     }
 
     private Vpc createVpc() {
         return Vpc.Builder.create(this, "PatientManagementVPC")
                 .vpcName("PatientManagementVPC")
                 .maxAzs(2)
+                .build();
+    }
+
+    // create an RDS database
+    private DatabaseInstance createDatabase(String id, String dbName) {
+        return DatabaseInstance.Builder
+                .create(this, id)
+                .engine(DatabaseInstanceEngine.postgres(
+                        PostgresInstanceEngineProps.builder()
+                                .version(PostgresEngineVersion.VER_17_2)
+                                .build()
+                ))
+                .vpc(vpc) // connect database to our vpc
+                .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO)) // cpu, compute power, storage etc for db to run on
+                .allocatedStorage(20)
+                .storageEncrypted(true)
+                .credentials(Credentials.fromGeneratedSecret("admin_user"))
+                .databaseName(dbName)
+                .removalPolicy(RemovalPolicy.DESTROY) // would do this in prod unless a backup is specified
                 .build();
     }
 
