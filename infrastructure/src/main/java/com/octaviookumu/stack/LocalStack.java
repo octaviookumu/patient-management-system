@@ -6,6 +6,7 @@ import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ec2.InstanceType;
 import software.amazon.awscdk.services.ecs.*;
 import software.amazon.awscdk.services.ecs.Protocol;
+import software.amazon.awscdk.services.ecs.patterns.ApplicationLoadBalancedFargateService;
 import software.amazon.awscdk.services.logs.LogGroup;
 import software.amazon.awscdk.services.logs.RetentionDays;
 import software.amazon.awscdk.services.msk.CfnCluster;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class LocalStack extends Stack {
 
@@ -96,6 +98,8 @@ public class LocalStack extends Stack {
         patientService.getNode().addDependency(patientDbHealthCheck);
         patientService.getNode().addDependency(billingService);
         patientService.getNode().addDependency(mskCluster);
+
+        createApiGatewayService(); // add to cloudformation
     }
 
     private Vpc createVpc() {
@@ -241,6 +245,54 @@ public class LocalStack extends Stack {
                 .assignPublicIp(false)
                 .serviceName(imageName)
                 .build();
+    }
+
+    // even though the API gateway is a FargateService, it is a special case in that
+    // we want it to be a load balanced service as well (view diagram)
+    private void createApiGatewayService() {
+        FargateTaskDefinition taskDefinition = FargateTaskDefinition.Builder
+                .create(this, "ApiGatewayTaskDefinition")
+                .cpu(256)
+                .memoryLimitMiB(512)
+                .build();
+
+        ContainerDefinitionOptions containerOptions = ContainerDefinitionOptions.builder()
+                .image(ContainerImage.fromRegistry("api-gateway"))
+                .environment(Map.of(
+                        "SPRING_PROFILES_ACTIVE", "prod",
+                        "AUTH_SERVICE_URL", "http://host.docker.internal:4005"
+                )) // because Localstack doesn't implement service discovery very well,
+                // we use the docker internal service discovery in combination with the port so the services can find each other
+                .portMappings(Stream.of(4004)
+                        .map(port -> PortMapping.builder()
+                                .containerPort(port) // port the app is running on inside container
+                                .hostPort(port) // port we want to expose for other services
+                                .protocol(Protocol.TCP)
+                                .build())
+                        .toList())
+                .logging(LogDriver.awsLogs(AwsLogDriverProps.builder()
+                        .logGroup(LogGroup.Builder.create(this, "ApiGatewayLogGroup")
+                                .logGroupName("/ecs/api-gateway")
+                                .removalPolicy(RemovalPolicy.DESTROY)
+                                .retention(RetentionDays.ONE_DAY)
+                                .build())
+                        .streamPrefix("api-gateway")
+                        .build()))
+                .build();
+
+        // link container options to task definition
+        taskDefinition.addContainer("ApiGatewayContainer", containerOptions);
+
+        // will automatically create a load balancer for us - provides entry point to protected infrastructure
+        ApplicationLoadBalancedFargateService apiGateway =
+                ApplicationLoadBalancedFargateService.Builder.create(this, "ApiGatewayService")
+                        .cluster(ecsCluster)
+                        .serviceName("api-gateway")
+                        .taskDefinition(taskDefinition)
+                        .desiredCount(1)
+                        .healthCheckGracePeriod(Duration.seconds(60)) // how long the ALB will wait for ApiGateway container to start before throwing an error
+                        .build();
+
     }
 
     // entry point for code that will create cloudformation template for our infrastructure
