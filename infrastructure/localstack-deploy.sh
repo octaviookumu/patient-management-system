@@ -26,11 +26,6 @@ if [[ -f "$ENV_FILE" ]]; then
     source "$ENV_FILE"
 fi
 
-# The database password. If you don't set DB_PASSWORD yourself, it uses
-# LocalDevPass123. To use another one, run:
-#   DB_PASSWORD='MyOtherPass456' ./localstack-deploy.sh
-DB_PASSWORD="${DB_PASSWORD:-LocalDevPass123}"
-
 # ---------- Helper ----------
 
 # Every aws command below needs the same options, so we define them once.
