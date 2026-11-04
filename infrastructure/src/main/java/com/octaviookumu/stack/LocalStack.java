@@ -24,11 +24,19 @@ public class LocalStack extends Stack {
 
     private final Vpc vpc;
     private final Cluster ecsCluster;
+    private final CfnParameter dbPassword;
 
     private static final Dotenv ENV = Dotenv.load();
 
     public LocalStack(final App scope, final String id, final StackProps props) {
         super(scope, id, props);
+
+        this.dbPassword = CfnParameter.Builder.create(this, "DbPassword")
+                .type("String")
+                .noEcho(true)
+                .minLength(8)
+                .description("Master password for the LocalStack databases")
+                .build();
 
         String jwtSecret = Objects.requireNonNull(
                 ENV.get("JWT_SECRET")
@@ -39,11 +47,18 @@ public class LocalStack extends Stack {
         DatabaseInstance authServiceDb = createDatabase("AuthServiceDB", "auth-service-db");
         DatabaseInstance patientServiceDb = createDatabase("PatientServiceDB", "patient-service-db");
 
-        CfnHealthCheck authDbHealthCheck = createDbHealthCheck(authServiceDb, "AuthServiceDbHealthCheck");
-        CfnHealthCheck patientDbHealthCheck = createDbHealthCheck(patientServiceDb, "PatientServiceDbHealthCheck");
+        boolean isLocalStack = "true".equals(String.valueOf(this.getNode().tryGetContext("localstack")));
+
+        // declare outside the if statement so they're in scope later; null when skipped
+        CfnHealthCheck authDbHealthCheck = null;
+        CfnHealthCheck patientDbHealthCheck = null;
+
+        if (!isLocalStack) {
+            authDbHealthCheck = createDbHealthCheck(authServiceDb, "AuthServiceDbHealthCheck");
+            patientDbHealthCheck = createDbHealthCheck(patientServiceDb, "PatientServiceDbHealthCheck");
+        }
 
         CfnCluster mskCluster = createMskCluster();
-
         this.ecsCluster = createEcsCluster();
 
         // create services
@@ -58,8 +73,10 @@ public class LocalStack extends Stack {
 
         // tells cdk logic and cloudformation template that authService has a dependency on db and healthcheck
         // makes sure the db starts before we start the auth service
-        authService.getNode().addDependency(authDbHealthCheck);
         authService.getNode().addDependency(authService);
+        if (authDbHealthCheck != null) {
+            authService.getNode().addDependency(authDbHealthCheck);
+        }
 
         FargateService billingService =
                 createFargateService(
@@ -95,7 +112,9 @@ public class LocalStack extends Stack {
                 );
 
         patientService.getNode().addDependency(patientServiceDb);
-        patientService.getNode().addDependency(patientDbHealthCheck);
+        if (patientDbHealthCheck != null) {
+            patientService.getNode().addDependency(patientDbHealthCheck);
+        }
         patientService.getNode().addDependency(billingService);
         patientService.getNode().addDependency(mskCluster);
 
@@ -122,7 +141,9 @@ public class LocalStack extends Stack {
                 .instanceType(InstanceType.of(InstanceClass.BURSTABLE2, InstanceSize.MICRO)) // cpu, compute power, storage etc for db to run on
                 .allocatedStorage(20)
                 .storageEncrypted(true)
-                .credentials(Credentials.fromGeneratedSecret("admin_user"))
+                .credentials(Credentials.fromPassword(
+                        "admin_user",
+                        SecretValue.cfnParameter(dbPassword)))
                 .databaseName(dbName)
                 .removalPolicy(RemovalPolicy.DESTROY) // would do this in prod unless a backup is specified
                 .build();
@@ -160,11 +181,6 @@ public class LocalStack extends Stack {
     private Cluster createEcsCluster() {
         return Cluster.Builder.create(this, "PatientManagementCluster")
                 .vpc(vpc) // connect cluster to vpc
-                .defaultCloudMapNamespace(CloudMapNamespaceOptions.builder()
-                        .name("patient-management.local") // allows microservices to find and communicate using domain
-                        // this means we don't need to know the IPs and internal addresses of our ECS services
-                        // it is all managed by the cloud map service discovery
-                        .build())
                 .build();
     }
 
@@ -227,8 +243,7 @@ public class LocalStack extends Stack {
             ));
 
             envVars.put("SPRING_DATASOURCE_USERNAME", "admin_user");
-            envVars.put("SPRING_DATASOURCE_PASSWORD",
-                    Objects.requireNonNull(db.getSecret()).secretValueFromJson("password").toString());
+            envVars.put("SPRING_DATASOURCE_PASSWORD", dbPassword.getValueAsString());
             envVars.put("SPRING_JPA_HIBERNATE_DDL_AUTO", "update");
             envVars.put("SPRING_SQL_INIT_MODE", "always");
             envVars.put("SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT", "600000");
@@ -298,7 +313,10 @@ public class LocalStack extends Stack {
     // entry point for code that will create cloudformation template for our infrastructure
     public static void main(final String[] args) {
         // create a new cdk app
-        App app = new App(AppProps.builder().outdir("./cdk.out").build());
+        App app = new App(AppProps.builder()
+                .outdir("./cdk.out")
+                .context(Map.of("localstack", "true"))
+                .build());
 
         Validations.of(app).acknowledge(
                 Acknowledgment.builder()
