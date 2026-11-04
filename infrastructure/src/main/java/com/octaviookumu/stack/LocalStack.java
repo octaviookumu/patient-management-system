@@ -259,7 +259,7 @@ public class LocalStack extends Stack {
         ContainerDefinitionOptions containerOptions = ContainerDefinitionOptions.builder()
                 .image(ContainerImage.fromRegistry("api-gateway"))
                 .environment(Map.of(
-                        "SPRING_PROFILES_ACTIVE", "prod",
+                        "SPRING_PROFILES_ACTIVE", "prod", // uses the application-prod.yml file
                         "AUTH_SERVICE_URL", "http://host.docker.internal:4005"
                 )) // because Localstack doesn't implement service discovery very well,
                 // we use the docker internal service discovery in combination with the port so the services can find each other
